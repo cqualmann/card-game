@@ -1,8 +1,10 @@
 // GLOBALS
+var CLICKABLES = [];
 var DECK = [];
 var DEFAULT_ALLOWED_FLIPPED = 2;
 var ALLOWED_FLIPPED = DEFAULT_ALLOWED_FLIPPED;
 var ATTEMPTS  = 0;
+var GAME_OVER = false;
 
 // Add a camera
 var scene = new THREE.Scene();
@@ -16,31 +18,29 @@ pointLight.position.y = 0;
 pointLight.position.z = 100;
 scene.add(pointLight);
 
-setupGame();
 
 var renderer = new THREE.WebGLRenderer();
 
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
-render();
+setupGame();
+
 function render() {
     requestAnimationFrame( render );
 
     flipCard();
     resetCards();
-    if(DECK.length == 0) {
-        console.log('Game Over');
-        console.log('Attempts: '+ATTEMPTS);
-        ATTEMPTS = 0;
-        setupGame();
+    if(DECK.length == 0 && !GAME_OVER) {
+        gameOver();  // function that would create end of game screen with attempt counter and button to restart
+    } else {
+        renderer.render( scene, camera );
     }
 
 
-    renderer.render( scene, camera );
 }
-function flipCard() { // flips a clicked card
 
+function flipCard() { // flips a clicked card
     DECK.forEach(function(c){
         if(c.flipCard) {
             c.isFlipping=true;
@@ -62,6 +62,7 @@ function flipCard() { // flips a clicked card
         }
     });
 }
+
 function resetCards() { // resets cards numbers down when the allowed flipped number has been reached
     var numFlipped = 0;
     var flipped = [];
@@ -86,28 +87,6 @@ function resetCards() { // resets cards numbers down when the allowed flipped nu
     }
 }
 
-
-var raycaster = new THREE.Raycaster();
-var mouse = new THREE.Vector2();
-window.addEventListener('click', function(event){
-    event.preventDefault();
-
-    mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
-    mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
-
-    raycaster.setFromCamera( mouse, camera );
-
-    var intersects = raycaster.intersectObjects( DECK );
-
-    if ( intersects.length > 0 ) {
-
-        intersects[0].object.callback();
-
-    }
-},false);
-
-
-
 function getRandomNum(min,max) {
     min = typeof min !== 'undefined' ? min : 0;
     max = typeof max !== 'undefined' ? max : 100;
@@ -115,7 +94,6 @@ function getRandomNum(min,max) {
         return Math.floor((Math.random() * max));
     }
 }
-
 
 function flipAll() { // flips all cards numbers up
     ALLOWED_FLIPPED = 999;
@@ -133,6 +111,8 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
             scene.remove(c);
         });
     }
+    if(document.getElementsByClassName('game-over').length>0) document.getElementsByTagName('body')[0].removeChild(document.getElementsByClassName('game-over')[0]);
+    ATTEMPTS = 0;
     DECK = [];
     ALLOWED_FLIPPED = DEFAULT_ALLOWED_FLIPPED;
     var xBase = -30;
@@ -212,4 +192,36 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
             scene.add( card );
         }
     }
+    GAME_OVER = false;
+    render();
 }
+
+function gameOver() {
+    // display Game Over
+    // display ATTEMPTS taken
+    // provide button to restart
+    GAME_OVER = true;
+    var gameOver = document.createElement('div');
+    gameOver.className = 'game-over';
+    gameOver.innerHTML = 'Game Over!<br />Attempts taken: '+ATTEMPTS+'<br /><a href="#">Restart</a>';
+    document.body.appendChild(gameOver);
+}
+
+
+var raycaster = new THREE.Raycaster();
+var mouse = new THREE.Vector2();
+window.addEventListener('click', function(event){
+    event.preventDefault();
+    mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
+    mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
+    raycaster.setFromCamera( mouse, camera );
+    var intersects = null;
+    intersects = raycaster.intersectObjects( DECK );
+    if ( intersects.length > 0 ) {
+        intersects[0].object.callback();
+    }
+    intersects = raycaster.intersectObjects( CLICKABLES );
+    if ( intersects.length > 0 ) {
+        intersects[0].object.callback();
+    }
+},false);
