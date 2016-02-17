@@ -2,6 +2,7 @@
 var DECK = [];
 var DEFAULT_ALLOWED_FLIPPED = 2;
 var ALLOWED_FLIPPED = DEFAULT_ALLOWED_FLIPPED;
+var ATTEMPTS  = 0;
 
 // Add a camera
 var scene = new THREE.Scene();
@@ -15,7 +16,7 @@ pointLight.position.y = 0;
 pointLight.position.z = 100;
 scene.add(pointLight);
 
-resetGame();
+setupGame();
 
 var renderer = new THREE.WebGLRenderer();
 
@@ -28,6 +29,12 @@ function render() {
 
     flipCard();
     resetCards();
+    if(DECK.length == 0) {
+        console.log('Game Over');
+        console.log('Attempts: '+ATTEMPTS);
+        ATTEMPTS = 0;
+        setupGame();
+    }
 
 
     renderer.render( scene, camera );
@@ -57,17 +64,25 @@ function flipCard() { // flips a clicked card
 }
 function resetCards() { // resets cards numbers down when the allowed flipped number has been reached
     var numFlipped = 0;
+    var flipped = [];
     DECK.forEach(function(c){
         if(c.flipped&&!c.isFlipping) numFlipped++;
     });
     if(numFlipped==ALLOWED_FLIPPED) {
+        ATTEMPTS++;
         DECK.forEach(function(c){
             if(c.flipped) {
-                console.log(c.number);
-                c.flipCard=true;
+                flipped.push(c);
+                c.flipCard = true;
                 c.flipped=!c.flipped;
             }
         });
+        if(flipped[0].number == flipped[1].number) {
+            scene.remove(flipped[0]);
+            scene.remove(flipped[1]);
+            DECK.splice(DECK.indexOf(flipped[0]),1);
+            DECK.splice(DECK.indexOf(flipped[1]),1);
+        }
     }
 }
 
@@ -112,67 +127,51 @@ function flipAll() { // flips all cards numbers up
     });
 }
 
-function resetGame() { // flips all cards numbers down and resets the allowed flipped number
+function setupGame() { // flips all cards numbers down and resets the allowed flipped number
     if(DECK.length>0){
         DECK.forEach(function(c){
             scene.remove(c);
         });
     }
+    DECK = [];
     ALLOWED_FLIPPED = DEFAULT_ALLOWED_FLIPPED;
     var xBase = -30;
     var yBase = -30;
     var incr = 30;
     // numbers for the cards
-    var numbers = [
-         [new THREE.MeshLambertMaterial({
-            map: THREE.ImageUtils.loadTexture('img/1.png')
-        }),1],
-        [new THREE.MeshLambertMaterial({
-            map: THREE.ImageUtils.loadTexture('img/2.png')
-        }),2],
-        [new THREE.MeshLambertMaterial({
-            map: THREE.ImageUtils.loadTexture('img/3.png')
-        }),3],
-        [new THREE.MeshLambertMaterial({
-            map: THREE.ImageUtils.loadTexture('img/4.png')
-        }),4],
-        [new THREE.MeshLambertMaterial({
-            map: THREE.ImageUtils.loadTexture('img/5.png')
-        }),5],
-        [new THREE.MeshLambertMaterial({
-            map: THREE.ImageUtils.loadTexture('img/6.png')
-        }),6],
-        [new THREE.MeshLambertMaterial({
-            map: THREE.ImageUtils.loadTexture('img/7.png')
-        }),7],
-        [new THREE.MeshLambertMaterial({
-            map: THREE.ImageUtils.loadTexture('img/8.png')
-        }),8],
-        [new THREE.MeshLambertMaterial({
-            map: THREE.ImageUtils.loadTexture('img/9.png')
-        }),9]
-    ];
+    var numbers = [];
+    var tmp = null;
+    for(var i = 1;i<=9;i++) {
+        tmp = THREE.ImageUtils.loadTexture('img/'+i+'.png');
+        tmp.minFilter = THREE.NearestFilter;
+        tmp = new THREE.MeshLambertMaterial({
+            map: tmp
+        });
+        numbers.push([tmp,i]);
+    }
     numbers.forEach(function(n){
         numbers.push(n);
     });
     // creates matrix of cards
     for(xBase=-60;xBase<=40;xBase+=20) {
         for(yBase=-20;yBase<=20;yBase+=20) {
+            tmp = THREE.ImageUtils.loadTexture('img/ball-texture.jpg');
+            tmp.minFilter = THREE.NearestFilter;
             var textures = [
                 new THREE.MeshLambertMaterial({
-                    map: THREE.ImageUtils.loadTexture('img/ball-texture.jpg')
+                    map: tmp
                 }),
                 new THREE.MeshLambertMaterial({
-                    map: THREE.ImageUtils.loadTexture('img/ball-texture.jpg')
+                    map: tmp
                 }),
                 new THREE.MeshLambertMaterial({
-                    map: THREE.ImageUtils.loadTexture('img/ball-texture.jpg')
+                    map: tmp
                 }),
                 new THREE.MeshLambertMaterial({
-                    map: THREE.ImageUtils.loadTexture('img/ball-texture.jpg')
+                    map: tmp
                 }),
                 new THREE.MeshLambertMaterial({
-                    map: THREE.ImageUtils.loadTexture('img/ball-texture.jpg')
+                    map: tmp
                 })
             ];
             var numIndex = getRandomNum(0,numbers.length);
