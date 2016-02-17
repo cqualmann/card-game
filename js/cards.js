@@ -25,6 +25,7 @@ renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
 setupGame();
+render();
 
 function render() {
     requestAnimationFrame( render );
@@ -95,6 +96,7 @@ function getRandomNum(min,max) {
     }
 }
 
+//noinspection JSUnusedGlobalSymbols
 function flipAll() { // flips all cards numbers up
     ALLOWED_FLIPPED = 999;
     DECK.forEach(function(c){
@@ -115,9 +117,6 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
     ATTEMPTS = 0;
     DECK = [];
     ALLOWED_FLIPPED = DEFAULT_ALLOWED_FLIPPED;
-    var xBase = -30;
-    var yBase = -30;
-    var incr = 30;
     // numbers for the cards
     var numbers = [];
     var tmp = null;
@@ -133,8 +132,8 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
         numbers.push(n);
     });
     // creates matrix of cards
-    for(xBase=-60;xBase<=40;xBase+=20) {
-        for(yBase=-20;yBase<=20;yBase+=20) {
+    for(var xBase=-60;xBase<=40;xBase+=20) {
+        for(var yBase=-20;yBase<=20;yBase+=20) {
             tmp = THREE.ImageUtils.loadTexture('img/ball-texture.jpg');
             tmp.minFilter = THREE.NearestFilter;
             var textures = [
@@ -193,7 +192,6 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
         }
     }
     GAME_OVER = false;
-    render();
 }
 
 function gameOver() {
@@ -215,8 +213,7 @@ window.addEventListener('click', function(event){
     mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
     mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
     raycaster.setFromCamera( mouse, camera );
-    var intersects = null;
-    intersects = raycaster.intersectObjects( DECK );
+    var intersects = raycaster.intersectObjects( DECK );
     if ( intersects.length > 0 ) {
         intersects[0].object.callback();
     }
