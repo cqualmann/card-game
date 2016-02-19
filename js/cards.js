@@ -11,8 +11,6 @@ var NUM_OF_CARDS = 18; // must be even
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 camera.position.z = 50;
-camera.updateProjectionMatrix();
-scene.add(camera);
 
 // Add a light
 var pointLight = new THREE.PointLight(0xFFFFFF);
@@ -26,12 +24,12 @@ var geometry = new THREE.SphereGeometry(0.5, 32, 32 );
 var BALL = new THREE.Mesh(geometry);
 BALL.position.x = scene.position.x;
 BALL.position.y = scene.position.y;
-scene.add( BALL );
+//scene.add( BALL );
 
 
-var renderer = new THREE.WebGLRenderer();
-
+var renderer = new THREE.WebGLRenderer({ alpha: true });
 renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setClearColor( 0x33ffff); // background color
 document.body.appendChild( renderer.domElement );
 
 setupGame();
@@ -57,11 +55,11 @@ function flipCard() { // flips a clicked card
             c.isFlipping=true;
             if(!c.flipped) {
                 if(c.rotation.y>0) {
-                    c.rotation.y-=0.2;
+                    c.rotation.y-=0.3;
                 }
             } else {
                 if(c.rotation.y<3.14159) {
-                    c.rotation.y+=0.2;
+                    c.rotation.y+=0.3;
                 }
             }
             if(c.rotation.y>3.14159) c.rotation.y=3.14159;
@@ -159,8 +157,8 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
     var test = [];
     for(i = 0;i<COLUMNS;i++) {
         for(k = 0;k<ROWS;k++) {
-            var posX = -INCR * (ROWS - i);
-            var posY = -INCR * (1 - k);
+            var posX = INCR * i;
+            var posY = INCR * k;
             test.push([posX,posY]);
             tmp = THREE.ImageUtils.loadTexture('img/ball-texture.jpg');
             tmp.minFilter = THREE.NearestFilter;
@@ -187,7 +185,7 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
             if(numbers.length!=1) {
                 numbers.splice(numIndex,1);
             }
-            var geometry = new THREE.BoxGeometry( 16, 16, 0.001 );
+            var geometry = new THREE.BoxGeometry( 16, 16, 1 );
             var t = new THREE.MeshFaceMaterial( textures );
             var card = new THREE.Mesh( geometry, t );
             card.position.x = posX;
@@ -219,7 +217,10 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
             scene.add( card );
         }
     }
-    console.log(test);
+    camera.position.x = test[NUM_OF_CARDS/2 +1][0];
+    camera.position.y = test[NUM_OF_CARDS/2 +1][1];
+    pointLight.position.x = camera.position.x;
+    pointLight.position.y = camera.position.y;
     GAME_OVER = false;
 }
 
