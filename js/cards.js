@@ -1,11 +1,15 @@
 // GLOBALS
 var CLICKABLES = [];
 var DECK = [];
+var REMOVE = [];
 var DEFAULT_ALLOWED_FLIPPED = 2;
 var ALLOWED_FLIPPED = DEFAULT_ALLOWED_FLIPPED;
 var ATTEMPTS  = 0;
 var GAME_OVER = false;
 var NUM_OF_CARDS = 18; // must be even
+var CLOCK = null;
+
+var geometry, material;
 
 // Add a camera
 var scene = new THREE.Scene();
@@ -20,16 +24,24 @@ pointLight.position.z = 100;
 scene.add(pointLight);
 
 // Test object
-var geometry = new THREE.SphereGeometry(0.5, 32, 32 );
+geometry = new THREE.SphereGeometry(0.5, 32, 32 );
 var BALL = new THREE.Mesh(geometry);
 BALL.position.x = scene.position.x;
 BALL.position.y = scene.position.y;
 //scene.add( BALL );
 
 
+geometry = new THREE.PlaneGeometry( window.innerWidth, window.innerHeight, 32 );
+//tmp = THREE.ImageUtils.loadTexture('img/bkg-texture.jpg'); // background image
+//tmp.minFilter = THREE.NearestFilter;
+//material = new THREE.MeshBasicMaterial( {map:tmp, side: THREE.DoubleSide} );
+material = new THREE.MeshBasicMaterial( {color:0x33ffff} );
+var background = new THREE.Mesh( geometry, material );
+background.position.z = -100;
+scene.add(background);
+
 var renderer = new THREE.WebGLRenderer({ alpha: true });
 renderer.setSize( window.innerWidth, window.innerHeight );
-renderer.setClearColor( 0x33ffff); // background color
 document.body.appendChild( renderer.domElement );
 
 setupGame();
@@ -58,13 +70,13 @@ function flipCard() { // flips a clicked card
                     c.rotation.y-=0.3;
                 }
             } else {
-                if(c.rotation.y<3.14159) {
+                if(c.rotation.y<Math.PI) {
                     c.rotation.y+=0.3;
                 }
             }
-            if(c.rotation.y>3.14159) c.rotation.y=3.14159;
+            if(c.rotation.y>Math.PI) c.rotation.y=Math.PI;
             if(c.rotation.y<0) c.rotation.y=0;
-            if(c.rotation.y==0||c.rotation.y==3.14159) {
+            if(c.rotation.y==0||c.rotation.y==Math.PI) {
                 c.flipCard=false;
                 c.isFlipping=false;
             }
@@ -79,19 +91,27 @@ function resetCards() { // resets cards numbers down when the allowed flipped nu
         if(c.flipped&&!c.isFlipping) numFlipped++;
     });
     if(numFlipped==ALLOWED_FLIPPED) {
-        ATTEMPTS++;
         DECK.forEach(function(c){
             if(c.flipped) {
                 flipped.push(c);
-                c.flipCard = true;
-                c.flipped=!c.flipped;
+                c.delayFlip++;
+                if(c.delayFlip>=10) {
+                    ATTEMPTS++;
+                    c.flipCard = true;
+                    c.flipped=!c.flipped;
+                    c.delayFlip = 0;
+                }
             }
         });
-        if(flipped[0].number == flipped[1].number) {
-            scene.remove(flipped[0]);
-            scene.remove(flipped[1]);
-            DECK.splice(DECK.indexOf(flipped[0]),1);
-            DECK.splice(DECK.indexOf(flipped[1]),1);
+        if(flipped[0].number == flipped[1].number) { // matches cards
+            flipped.forEach(function(c){
+                //scene.remove(c);
+                DECK.splice(DECK.indexOf(c),1);
+                REMOVE.push(c);
+                c.material.materials.forEach(function(m){
+                    m.opacity = 0.5;
+                });
+            });
         }
     }
 }
@@ -121,6 +141,12 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
             scene.remove(c);
         });
     }
+    if(REMOVE.length>0){
+        REMOVE.forEach(function(c){
+            scene.remove(c);
+        });
+    }
+    REMOVE = [];
     if(document.getElementsByClassName('game-over').length>0) document.getElementsByTagName('body')[0].removeChild(document.getElementsByClassName('game-over')[0]);
     ATTEMPTS = 0;
     DECK = [];
@@ -194,6 +220,7 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
             card.flipped = false;
             card.flipCard = false;
             card.isFlipping = false;
+            card.delayFlip = 0;
             card.callback = function() {
                 if(!this.flipped) {
                     if(!this.isFlipping) {
@@ -217,18 +244,27 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
             scene.add( card );
         }
     }
-    camera.position.x = test[NUM_OF_CARDS/2 +1][0];
-    camera.position.y = test[NUM_OF_CARDS/2 +1][1];
+    var highX = 0, highY = 0;
+    test.forEach(function(p){
+        if(p[0]>highX) highX = p[0];
+        if(p[1]>highY) highY = p[1];
+    });
+    camera.position.x = (highX + CARD_SIZE / 2) / 2;
+    camera.position.y = (highY + CARD_SIZE / 2) / 2;
     pointLight.position.x = camera.position.x;
     pointLight.position.y = camera.position.y;
     GAME_OVER = false;
+    CLOCK = new THREE.Clock(true);
 }
 
 function gameOver() {
     GAME_OVER = true;
+    CLOCK.stop();
+    var time = CLOCK.getElapsedTime();
+    var score = (time * 1000 * ATTEMPTS);
     var gameOver = document.createElement('div');
     gameOver.className = 'game-over';
-    gameOver.innerHTML = 'Game Over!<br />Attempts taken: '+ATTEMPTS+'<br /><a href="#">Restart</a>';
+    gameOver.innerHTML = 'Game Over!<br />Score: '+score+'<br /><a href="#">Restart</a>';
     document.body.appendChild(gameOver);
 }
 
