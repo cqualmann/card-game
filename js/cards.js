@@ -44,6 +44,8 @@ var renderer = new THREE.WebGLRenderer({ alpha: true });
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
+
+CLOCK = new THREE.Clock(false);
 setupGame();
 render();
 
@@ -167,7 +169,7 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
         numbers.push(n);
     });
     // creates matrix of cards
-    var CARD_SIZE = 16;
+    var CARD_SIZE = 18;
     var INCR = CARD_SIZE + 4;
     var ROWS = Math.sqrt(NUM_OF_CARDS).toFixed() * 1 -1;
     var COLUMNS = NUM_OF_CARDS / ROWS;
@@ -211,7 +213,7 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
             if(numbers.length!=1) {
                 numbers.splice(numIndex,1);
             }
-            var geometry = new THREE.BoxGeometry( 18, 18, 0.001 );
+            var geometry = new THREE.BoxGeometry( CARD_SIZE, CARD_SIZE, 0.001 );
             var t = new THREE.MeshFaceMaterial( textures );
             var card = new THREE.Mesh( geometry, t );
             card.position.x = posX;
@@ -249,19 +251,20 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
         if(p[0]>highX) highX = p[0];
         if(p[1]>highY) highY = p[1];
     });
-    camera.position.x = (highX + CARD_SIZE / 2) / 2;
-    camera.position.y = (highY + CARD_SIZE / 2) / 2;
+    camera.position.x = highX / 2;
+    camera.position.y = highY / 2;
     pointLight.position.x = camera.position.x;
     pointLight.position.y = camera.position.y;
     GAME_OVER = false;
-    CLOCK = new THREE.Clock(true);
+    CLOCK.start();
 }
 
 function gameOver() {
     GAME_OVER = true;
+    var time = CLOCK.getDelta();
     CLOCK.stop();
-    var time = CLOCK.getElapsedTime();
-    var score = (time * 1000 * ATTEMPTS);
+    var score = (ATTEMPTS * time) / 10;
+    score = Math.abs(score.toFixed()*1);
     var gameOver = document.createElement('div');
     gameOver.className = 'game-over';
     gameOver.innerHTML = 'Game Over!<br />Score: '+score+'<br /><a href="#">Restart</a>';
