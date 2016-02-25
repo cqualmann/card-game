@@ -211,7 +211,7 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
             if(numbers.length!=1) {
                 numbers.splice(numIndex,1);
             }
-            var geometry = new THREE.BoxGeometry( 16, 16, 1 );
+            var geometry = new THREE.BoxGeometry( 18, 18, 0.001 );
             var t = new THREE.MeshFaceMaterial( textures );
             var card = new THREE.Mesh( geometry, t );
             card.position.x = posX;
