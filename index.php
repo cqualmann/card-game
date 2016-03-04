@@ -31,6 +31,7 @@
             });
         });
     </script>
+    <script src="fonts/helvetiker_regular.typeface.js"></script>
 
     </body>
 </html>

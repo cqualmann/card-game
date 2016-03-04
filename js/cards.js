@@ -1,13 +1,15 @@
 // GLOBALS
 var CLICKABLES = [];
 var DECK = [];
+var CARD_COORDS = [];
 var REMOVE = [];
 var DEFAULT_ALLOWED_FLIPPED = 2;
 var ALLOWED_FLIPPED = DEFAULT_ALLOWED_FLIPPED;
 var ATTEMPTS  = 0;
 var GAME_OVER = false;
-var NUM_OF_CARDS = 18; // must be even
+var NUM_OF_CARDS;
 var CLOCK = null;
+var AVAILBLE_CARDS = 9;
 
 var geometry, material;
 
@@ -137,19 +139,15 @@ function flipAll() { // flips all cards numbers up
     });
 }
 
-function setupGame() { // flips all cards numbers down and resets the allowed flipped number
-    if(DECK.length>0){
-        DECK.forEach(function(c){
-            scene.remove(c);
-        });
-    }
-    if(REMOVE.length>0){
-        REMOVE.forEach(function(c){
-            scene.remove(c);
-        });
-    }
-    REMOVE = [];
-    if(document.getElementsByClassName('game-over').length>0) document.getElementsByTagName('body')[0].removeChild(document.getElementsByClassName('game-over')[0]);
+function setupGame(setupCards) { // flips all cards numbers down and resets the allowed flipped number
+    CLOCK.stop();
+    clearScene();
+
+    if(!setupCards) setupCards = 18;
+    NUM_OF_CARDS = setupCards;
+    if(NUM_OF_CARDS % 2 != 0) NUM_OF_CARDS++;
+    if(NUM_OF_CARDS>AVAILBLE_CARDS*2) NUM_OF_CARDS=AVAILBLE_CARDS*2;
+    CARD_COORDS = [];
     ATTEMPTS = 0;
     DECK = [];
     ALLOWED_FLIPPED = DEFAULT_ALLOWED_FLIPPED;
@@ -182,12 +180,16 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
         COLUMNS = ROWS;
         ROWS = tmp;
     }
-    var test = [];
+    if(window.innerHeight > window.innerWidth) {
+        tmp = COLUMNS;
+        COLUMNS = ROWS;
+        ROWS = tmp;
+    }
     for(i = 0;i<COLUMNS;i++) {
         for(k = 0;k<ROWS;k++) {
             var posX = INCR * i;
             var posY = INCR * k;
-            test.push([posX,posY]);
+            CARD_COORDS.push([posX,posY]);
             tmp = THREE.ImageUtils.loadTexture('img/ball-texture.jpg');
             tmp.minFilter = THREE.NearestFilter;
             var textures = [
@@ -247,7 +249,7 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
         }
     }
     var highX = 0, highY = 0;
-    test.forEach(function(p){
+    CARD_COORDS.forEach(function(p){
         if(p[0]>highX) highX = p[0];
         if(p[1]>highY) highY = p[1];
     });
@@ -259,16 +261,77 @@ function setupGame() { // flips all cards numbers down and resets the allowed fl
     CLOCK.start();
 }
 
+function clearScene() {
+    if(DECK.length>0){
+        DECK.forEach(function(c){
+            scene.remove(c);
+        });
+    }
+    if(REMOVE.length>0){
+        REMOVE.forEach(function(c){
+            scene.remove(c);
+        });
+    }
+    if(CLICKABLES.length>0){
+        CLICKABLES.forEach(function(c){
+            scene.remove(c);
+        });
+    }
+    REMOVE = [];
+    CLICKABLES = [];
+}
+
 function gameOver() {
     GAME_OVER = true;
     var time = CLOCK.getDelta();
     CLOCK.stop();
     var score = (ATTEMPTS * time) / 10;
     score = Math.abs(score.toFixed()*1);
-    var gameOver = document.createElement('div');
-    gameOver.className = 'game-over';
-    gameOver.innerHTML = 'Game Over!<br />Score: '+score+'<br /><a href="#">Restart</a>';
-    document.body.appendChild(gameOver);
+
+    var geometry = new THREE.TextGeometry('Completed!',{
+        size:10,
+        height:1,
+        curveSegments: 20
+    });
+    var material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+    var go = new THREE.Mesh(geometry,material);
+    var highX = 0, highY = 0;
+    CARD_COORDS.forEach(function(p){
+        if(p[0]>highX) highX = p[0];
+        if(p[1]>highY) highY = p[1];
+    });
+    go.position.x = CARD_COORDS[0][0];
+    go.position.y = highY / 1.5;
+
+    geometry = new THREE.TextGeometry('Score: '+score,{
+        size:8,
+        height:1,
+        curveSegments: 20
+    });
+    material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+    var scoreText = new THREE.Mesh(geometry,material);
+    scoreText.position.x = CARD_COORDS[0][0];
+    scoreText.position.y = highY / 2.5;
+
+    geometry = new THREE.TextGeometry('Restart',{
+        size:8,
+        height:1,
+        curveSegments: 20
+    });
+    material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+    var restart = new THREE.Mesh(geometry,material);
+    restart.position.x = CARD_COORDS[0][0];
+    restart.position.y = 0;
+    restart.callback = function(){
+        setupGame();
+    };
+    CLICKABLES.push(restart);
+    REMOVE.push(go);
+    REMOVE.push(scoreText);
+    REMOVE.push(restart);
+    scene.add(go);
+    scene.add(scoreText);
+    scene.add(restart);
 }
 
 
