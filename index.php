@@ -20,6 +20,7 @@
 
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <script src="js/dat-gui.js"></script>
     <script src="js/three.min.js"></script>
     <script src="js/cards.js"></script>
     <script>

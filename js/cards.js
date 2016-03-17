@@ -11,6 +11,17 @@ var NUM_OF_CARDS;
 var CLOCK = null;
 var AVAILBLE_CARDS = 9;
 
+var options = function(){
+    this.cards = 18;
+};
+
+var GUI = new dat.GUI();
+var opts = new options();
+var cardUpdate = GUI.add(opts, 'cards',2,18).step(2);
+cardUpdate.onFinishChange(function(value) {
+  setupGame(value);
+});
+
 var geometry, material;
 
 // Add a camera
@@ -34,7 +45,7 @@ BALL.position.y = scene.position.y;
 
 
 geometry = new THREE.PlaneGeometry( window.innerWidth, window.innerHeight, 32 );
-//tmp = THREE.ImageUtils.loadTexture('img/bkg-texture.jpg'); // background image
+//tmp = THREE.ImageUtils.loadTexture('img/bkg-texture.jpg'); // background image. uncomment these lines and comment the other material to enable background.
 //tmp.minFilter = THREE.NearestFilter;
 //material = new THREE.MeshBasicMaterial( {map:tmp, side: THREE.DoubleSide} );
 material = new THREE.MeshBasicMaterial( {color:0x33ffff} );
@@ -175,7 +186,7 @@ function setupGame(setupCards) { // flips all cards numbers down and resets the 
         ROWS++;
         COLUMNS = NUM_OF_CARDS / ROWS;
     }
-    if(ROWS > COLUMNS) {
+    if(ROWS >= COLUMNS) {
         tmp = COLUMNS;
         COLUMNS = ROWS;
         ROWS = tmp;
@@ -323,7 +334,7 @@ function gameOver() {
     restart.position.x = CARD_COORDS[0][0];
     restart.position.y = 0;
     restart.callback = function(){
-        setupGame();
+        setupGame(NUM_OF_CARDS);
     };
     CLICKABLES.push(restart);
     REMOVE.push(go);
